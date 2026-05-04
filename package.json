@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "import:forza": "node scripts/import-forza.mjs",
+    "import:forza:write": "node scripts/import-forza.mjs --write",
+    "sync:supabase": "node scripts/sync-supabase.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",

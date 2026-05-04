@@ -32,7 +32,7 @@ export function CardView({ card, hidden, language, revealLabel }: CardViewProps)
       <div className="cardIdentity">
         <h2>{card.name}</h2>
         <p>
-          {card.manufacturer} · {card.year}
+          {card.manufacturer} - {card.year}
         </p>
       </div>
       <dl className="statGrid">

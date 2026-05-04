@@ -4,16 +4,23 @@ Two-player online Super Trunfo inspired by Forza Horizon cars.
 
 ## Current State
 
-This repository currently implements the first vertical slice:
+This repository now implements:
 
 - Next.js + TypeScript app.
 - Tested Super Trunfo game engine.
-- Sample complete car cards.
-- Local room/lobby/match flow.
+- Realtime-ready room APIs and Supabase-backed room sync path.
+- Versioned sample catalog file and importer/sync scripts.
+- Local demo fallback when Supabase env is missing.
 - Premium collectible card UI.
 - PT-BR and English UI helpers.
 
-The full MVP still requires the Forza Wiki scraper, image download/storage, Supabase realtime sync, full catalog import, and Vercel deployment.
+What still depends on your own infrastructure:
+
+- Filling `.env` with Supabase project credentials.
+- Running the Supabase SQL in `supabase/schema.sql`.
+- Running the importer against the live Forza Wiki pages.
+- Syncing the generated dataset and images to Supabase Storage.
+- Deploying to Vercel with those environment variables.
 
 ## Setup
 
@@ -36,9 +43,25 @@ npm test
 npm run build
 ```
 
-## Supabase Environment For Later Phases
+## Import The Catalog
 
-The next implementation phase will add Supabase sync. Expected local variables:
+```bash
+npm run import:forza
+```
+
+That writes a preview dataset to `data/catalog/cards.preview.json` and an import report to `data/catalog/import-report.json`.
+
+After reviewing the diff:
+
+```bash
+npm run import:forza:write
+```
+
+That promotes the generated dataset to `data/catalog/cards.json`.
+
+## Supabase Environment
+
+Create a local `.env.local` with:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=
@@ -49,14 +72,22 @@ SUPABASE_STORAGE_BUCKET=card-images
 
 Do not commit `.env` files.
 
+Then apply the schema in `supabase/schema.sql`.
+
+## Sync Catalog To Supabase
+
+```bash
+npm run sync:supabase
+```
+
+That uploads local images from `data/images/` to the `card-images` bucket and upserts catalog rows into `public.catalog_cards`.
+
 ## Data Source Notes
 
 The target catalog comes from Forza Wiki/Fandom pages listed in `docs/superpowers/specs/2026-05-04-super-trunfo-mvp-design.md`. Images should be downloaded from each car page thumb/infobox and source URLs preserved in the dataset.
 
-## Follow-Up Implementation Plans
+## Deployment Notes
 
-After this vertical slice:
-
-1. Build the Forza Wiki scraper, normalization, image download, and diff approval workflow.
-2. Add Supabase schema, Storage sync, Realtime room sync, and opportunistic cleanup.
-3. Import the complete eligible catalog and deploy to Vercel.
+- Frontend and API routes are intended for Vercel.
+- Realtime subscriptions use the `rooms` table through Supabase Postgres Changes.
+- The app automatically falls back to demo mode if Supabase env vars are absent, so local UI work can continue without blocking on infra.

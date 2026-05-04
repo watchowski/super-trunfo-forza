@@ -21,20 +21,29 @@ export function GameView({ room, viewer, language, onChoose, onNextRound, onTogg
   const revealedOpponentCard = opponent === "host" ? room.lastRound?.hostCard : room.lastRound?.guestCard;
   const opponentCard = room.phase === "revealed" ? revealedOpponentCard : undefined;
   const isActive = room.activePlayer === viewer && room.phase === "playing";
+  const isPt = language === "pt-BR";
+  const winnerLabel =
+    room.lastRound?.winner === "tie"
+      ? isPt
+        ? "Empate"
+        : "Tie"
+      : room.lastRound?.winner === "host"
+        ? room.host?.nickname ?? "Host"
+        : room.guest?.nickname ?? "Guest";
 
   return (
     <section className="matchLayout">
       <div className="cardColumn">
-        <h2>Sua carta</h2>
+        <h2>{isPt ? "Sua carta" : "Your card"}</h2>
         <CardView card={ownCard} language={language} />
       </div>
       <div className="roundColumn">
         <div className="roundColumnSpacer" aria-hidden="true" />
         <div className="roundPanel">
-          <p className="eyebrow">Rodada</p>
+          <p className="eyebrow">{isPt ? "Rodada" : "Round"}</p>
           {room.phase === "playing" && (
             <>
-              <h1>{isActive ? "Escolha um atributo" : "Aguardando escolha"}</h1>
+              <h1>{isActive ? (isPt ? "Escolha um atributo" : "Choose an attribute") : isPt ? "Aguardando escolha" : "Waiting for a pick"}</h1>
               <div className="statButtons">
                 {COMPARABLE_STATS.map((stat) => (
                   <button className="statButton" type="button" key={stat} disabled={!isActive} onClick={() => onChoose(stat)}>
@@ -47,21 +56,40 @@ export function GameView({ room, viewer, language, onChoose, onNextRound, onTogg
           )}
           {room.phase === "revealed" && (
             <>
-              <h1>{room.lastRound?.winner === "tie" ? "Empate" : `${room.lastRound?.winner} venceu`}</h1>
-              <p>Monte em disputa: {room.lastRound?.pileSize}</p>
+              <h1>
+                {room.lastRound?.winner === "tie"
+                  ? isPt
+                    ? "Empate"
+                    : "Tie"
+                  : isPt
+                    ? `${winnerLabel} venceu`
+                    : `${winnerLabel} wins`}
+              </h1>
+              <p>{isPt ? "Monte em disputa" : "Cards in play"}: {room.lastRound?.pileSize}</p>
               <button className="primaryButton" type="button" onClick={onNextRound}>
-                Proxima rodada
+                {isPt ? "Proxima rodada" : "Next round"}
               </button>
             </>
           )}
           <button className="ghostButton" type="button" onClick={onToggleEnd}>
-            {room[viewer]?.wantsToEnd ? "Cancelar encerramento" : "Encerrar partida"}
+            {room[viewer]?.wantsToEnd
+              ? isPt
+                ? "Cancelar encerramento"
+                : "Cancel end request"
+              : isPt
+                ? "Encerrar partida"
+                : "End match"}
           </button>
         </div>
       </div>
       <div className="cardColumn opponentColumn">
-        <h2>Carta oponente</h2>
-        <CardView card={opponentCard} hidden={room.phase !== "revealed"} language={language} revealLabel="Revela apos a escolha" />
+        <h2>{isPt ? "Carta oponente" : "Opponent card"}</h2>
+        <CardView
+          card={opponentCard}
+          hidden={room.phase !== "revealed"}
+          language={language}
+          revealLabel={isPt ? "Revela apos a escolha" : "Reveals after the pick"}
+        />
       </div>
     </section>
   );

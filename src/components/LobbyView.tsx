@@ -1,16 +1,23 @@
 "use client";
 
 import type { GameState } from "@/domain/game";
+import type { Language, PlayerId } from "@/domain/cards";
 
 interface LobbyViewProps {
   room: GameState;
+  viewer: PlayerId;
+  language: Language;
+  isDemo?: boolean;
   onStart: () => void;
   onDeckSizeChange: (size: number) => void;
   onKickGuest: () => void;
 }
 
-export function LobbyView({ room, onStart, onDeckSizeChange, onKickGuest }: LobbyViewProps) {
+export function LobbyView({ room, viewer, language, isDemo, onStart, onDeckSizeChange, onKickGuest }: LobbyViewProps) {
   const deckOptions = Array.from({ length: Math.floor(room.maxDeckSize / 2) }, (_, index) => (index + 1) * 2);
+  const isPt = language === "pt-BR";
+  const canControl = viewer === "host";
+
   return (
     <section className="panel">
       <div className="sectionHeader">
@@ -26,26 +33,31 @@ export function LobbyView({ room, onStart, onDeckSizeChange, onKickGuest }: Lobb
         </div>
         <div className="playerSlot">
           <span>Guest</span>
-          <strong>{room.guest?.nickname ?? "Aguardando..."}</strong>
-          {room.guest && (
+          <strong>{room.guest?.nickname ?? (isPt ? "Aguardando..." : "Waiting...")}</strong>
+          {room.guest && canControl && (
             <button className="ghostButton" type="button" onClick={onKickGuest}>
-              Expulsar
+              {isPt ? "Expulsar" : "Kick"}
             </button>
           )}
         </div>
       </div>
+      <p className="inlineNotice">
+        {isPt
+          ? `Maximo disponivel: ${room.maxDeckSize} cartas${isDemo ? " nesta amostra" : ""}.`
+          : `Maximum available: ${room.maxDeckSize} cards${isDemo ? " in this sample" : ""}.`}
+      </p>
       <label className="field">
-        <span>Cartas na partida</span>
-        <select value={room.selectedDeckSize} onChange={(event) => onDeckSizeChange(Number(event.target.value))}>
+        <span>{isPt ? "Cartas na partida" : "Cards in match"}</span>
+        <select value={room.selectedDeckSize} disabled={!canControl} onChange={(event) => onDeckSizeChange(Number(event.target.value))}>
           {deckOptions.map((size) => (
             <option key={size} value={size}>
-              {size === room.maxDeckSize ? `${size} (todas)` : size}
+              {size === room.maxDeckSize ? `${size} (${isPt ? "todas" : "all"})` : size}
             </option>
           ))}
         </select>
       </label>
-      <button className="primaryButton" type="button" disabled={!room.guest} onClick={onStart}>
-        Iniciar partida
+      <button className="primaryButton" type="button" disabled={!room.guest || !canControl} onClick={onStart}>
+        {isPt ? "Iniciar partida" : "Start match"}
       </button>
     </section>
   );
