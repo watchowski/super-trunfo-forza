@@ -285,10 +285,11 @@ select {
 }
 
 .matchLayout {
-  grid-template-columns: minmax(320px, 380px) minmax(420px, 1fr) minmax(320px, 380px);
+  grid-template-columns: minmax(320px, 380px) minmax(280px, 360px) minmax(320px, 380px);
   align-items: start;
   margin-top: 34px;
-  gap: 36px;
+  justify-content: space-between;
+  gap: 28px;
 }
 
 .playerSlot,
@@ -331,8 +332,8 @@ select {
 
 .roundPanel h1 {
   margin: 20px 0 22px;
-  font-size: clamp(2rem, 4vw, 3.35rem);
-  line-height: 1;
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  line-height: 0.98;
   letter-spacing: 0;
 }
 
@@ -386,38 +387,52 @@ select {
 
 .statButtons {
   display: grid;
-  grid-template-columns: repeat(5, minmax(78px, 1fr));
-  gap: 8px;
-  margin-bottom: 8px;
+  grid-template-columns: 1fr;
+  gap: 0;
+  margin-bottom: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .statButton {
   display: grid;
+  grid-template-columns: 52px 1fr;
   min-width: 0;
-  min-height: 72px;
-  align-content: center;
-  gap: 2px;
-  padding: 9px 8px;
-  text-align: center;
+  min-height: 0;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0;
+  background: transparent;
 }
 
 .statButton strong {
   color: #f7d889;
-  font-size: 0.95rem;
+  font-size: 1rem;
   line-height: 1;
 }
 
 .statButton span {
   min-width: 0;
-  color: var(--muted);
-  font-size: 0.72rem;
+  color: var(--text);
+  font-size: 0.98rem;
   line-height: 1.1;
   overflow-wrap: anywhere;
 }
 
 .statButton:disabled {
-  opacity: 0.45;
+  opacity: 0.82;
   cursor: not-allowed;
+}
+
+.statButton:disabled strong {
+  color: rgba(247, 216, 137, 0.7);
+}
+
+.statButton:disabled span {
+  color: rgba(244, 247, 251, 0.72);
 }
 
 .modalBackdrop {
@@ -453,6 +468,6 @@ select {
   }
 
   .statButtons {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 }
