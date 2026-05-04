@@ -69,3 +69,139 @@ select {
   font-weight: 800;
   text-decoration: none;
 }
+
+.gameCard {
+  position: relative;
+  width: min(100%, 320px);
+  aspect-ratio: 2.5 / 3.5;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  gap: 10px;
+  padding: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: linear-gradient(160deg, #171d27, #090b10);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
+}
+
+.gameCard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  opacity: 0.35;
+}
+
+.superTrunfo {
+  border-color: #d8b35f;
+  box-shadow: 0 24px 80px rgba(216, 179, 95, 0.2);
+}
+
+.superTrunfo::after {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: conic-gradient(from 90deg, transparent, rgba(216, 179, 95, 0.18), transparent, rgba(255, 255, 255, 0.1), transparent);
+  animation: holo 8s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes holo {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+.cardTopline,
+.cardIdentity,
+.statGrid,
+.cardImageWrap {
+  position: relative;
+  z-index: 1;
+}
+
+.cardTopline {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #f7d889;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.cardImageWrap {
+  min-height: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #202733;
+}
+
+.cardImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.cardIdentity h2 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.1;
+}
+
+.cardIdentity p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.statGrid {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+
+.statRow {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: 4px;
+}
+
+.statRow dt {
+  color: #f7d889;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.statRow dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 800;
+}
+
+.mutedStat dt,
+.mutedStat dd {
+  color: var(--muted);
+}
+
+.cardBack {
+  place-items: center;
+  text-align: center;
+}
+
+.cardBackMark {
+  width: 84px;
+  height: 84px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  color: var(--accent);
+  font-weight: 900;
+}
