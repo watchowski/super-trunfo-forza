@@ -38,7 +38,7 @@ function slugify(value) {
 }
 
 function parsePowerLevel(value) {
-  const match = normalizeWhitespace(value).match(/^(D|C|B|A|S1|S2|X|R)\s+(\d{3,4})$/);
+  const match = normalizeWhitespace(value).match(/^(D|C|B|A|S1|S2|X|R)\s*(\d{3,4})$/);
   if (!match) return null;
   return { class: match[1], pi: Number(match[2]), label: `${match[1]} ${Number(match[2])}` };
 }
@@ -47,16 +47,56 @@ function createDom(html) {
   return new JSDOM(html).window.document;
 }
 
-async function fetchDocument(url) {
+function wikiTitleFromUrl(url) {
+  const parsed = new URL(url);
+  const match = parsed.pathname.match(/^\/wiki\/(.+)$/);
+  if (!match) {
+    throw new Error(`Unsupported wiki URL: ${url}`);
+  }
+  return decodeURIComponent(match[1]);
+}
+
+async function fetchApiJson(url) {
   const response = await fetch(url, {
     headers: {
-      "user-agent": "super-trunfo-importer/0.1"
+      "user-agent": "super-trunfo-importer/0.1",
+      accept: "application/json"
     }
   });
   if (!response.ok) {
     throw new Error(`Failed to fetch ${url}: ${response.status}`);
   }
-  return createDom(await response.text());
+  return response.json();
+}
+
+async function fetchWikiDocument(url) {
+  const title = wikiTitleFromUrl(url);
+  const apiUrl = new URL("https://forza.fandom.com/api.php");
+  apiUrl.searchParams.set("action", "parse");
+  apiUrl.searchParams.set("page", title);
+  apiUrl.searchParams.set("prop", "text");
+  apiUrl.searchParams.set("formatversion", "2");
+  apiUrl.searchParams.set("format", "json");
+  const payload = await fetchApiJson(apiUrl.toString());
+  const html = payload?.parse?.text;
+  if (typeof html !== "string" || !html.length) {
+    throw new Error(`Parse API returned no HTML for ${title}`);
+  }
+  return {
+    document: createDom(html),
+    pageTitle: payload?.parse?.title ?? title
+  };
+}
+
+function splitVehicleCell(value) {
+  const text = normalizeWhitespace(value);
+  const yearMatches = [...text.matchAll(/(19|20)\d{2}/g)];
+  if (!yearMatches.length) return null;
+  const lastMatch = yearMatches[yearMatches.length - 1];
+  const year = Number(lastMatch[0]);
+  const yearIndex = lastMatch.index ?? 0;
+  const name = normalizeWhitespace(text.slice(0, yearIndex));
+  return { name, year };
 }
 
 function extractListEntries(document, game) {
@@ -66,28 +106,30 @@ function extractListEntries(document, game) {
   for (const row of rows) {
     const link = row.querySelector('a[href^="/wiki/"]');
     if (!link) continue;
-    const rowText = normalizeWhitespace(row.textContent ?? "");
-    if (!/\b(19|20)\d{2}\b/.test(rowText)) continue;
-    const matches = [...rowText.matchAll(/\b\d+(?:\.\d+)?\b/g)].map((match) => Number(match[0]));
-    const plMatch = rowText.match(/\b(D|C|B|A|S1|S2|X|R)\s+\d{3,4}\b/);
-    if (matches.length < 5 || !plMatch) continue;
+    const cells = [...row.querySelectorAll("th,td")]
+      .map((cell) => normalizeWhitespace(cell.textContent ?? ""))
+      .filter(Boolean);
 
-    const yearMatch = rowText.match(/\b(19|20)\d{2}\b/);
-    if (!yearMatch) continue;
+    if (cells.length < 8) continue;
+    const vehicle = splitVehicleCell(cells[0]);
+    const pl = parsePowerLevel(cells[cells.length - 1]);
+    if (!vehicle || !pl) continue;
+
+    const stats = cells.slice(2, 7).map((value) => Number(value));
+    if (stats.length !== 5 || stats.some((value) => !Number.isFinite(value))) continue;
 
     entries.push({
       game,
       href: new URL(link.getAttribute("href"), "https://forza.fandom.com").toString(),
-      listText: rowText,
-      listName: normalizeWhitespace(link.textContent ?? ""),
-      year: Number(yearMatch[0]),
+      listName: vehicle.name,
+      year: vehicle.year,
       stats: {
-        sp: matches[matches.length - 7],
-        ha: matches[matches.length - 6],
-        ac: matches[matches.length - 5],
-        ls: matches[matches.length - 4],
-        br: matches[matches.length - 3],
-        pl: parsePowerLevel(plMatch[0])
+        sp: stats[0],
+        ha: stats[1],
+        ac: stats[2],
+        ls: stats[3],
+        br: stats[4],
+        pl
       }
     });
   }
@@ -95,21 +137,19 @@ function extractListEntries(document, game) {
   return entries.filter((entry) => entry.stats.pl);
 }
 
-function extractMeta(document) {
+function extractMeta(document, pageTitle) {
   const infobox = document.querySelector(".portable-infobox")?.textContent ?? "";
   const lines = infobox
     .split("\n")
     .map((line) => normalizeWhitespace(line))
     .filter(Boolean);
 
-  const title = normalizeWhitespace(
-    document.querySelector(".mw-page-title-main")?.textContent ??
-      document.querySelector("h1")?.textContent ??
-      ""
-  );
-  const manufacturer = lines[0] ?? title.split(" ").slice(0, 1).join(" ");
-  const yearMatch = infobox.match(/\b(19|20)\d{2}\b/);
-  const country = lines.find((line) => /^[A-Z][A-Za-z .'-]+$/.test(line) && line !== manufacturer && !line.includes("Car")) ?? "";
+  const title = normalizeWhitespace(pageTitle);
+  const productionIndex = lines.findIndex((line) => /\b(19|20)\d{2}\b.+Car/.test(line));
+  const productionLine = productionIndex >= 0 ? lines[productionIndex] : "";
+  const productionYearMatch = productionLine.match(/(19|20)\d{2}/);
+  const manufacturer = productionIndex > 0 ? lines[productionIndex - 1] : title.split(" ")[0] ?? "";
+  const country = productionIndex >= 0 ? lines[productionIndex + 1] ?? "" : "";
   const image =
     document.querySelector(".portable-infobox img")?.getAttribute("src") ??
     document.querySelector('meta[property="og:image"]')?.getAttribute("content") ??
@@ -118,7 +158,7 @@ function extractMeta(document) {
   return {
     title,
     manufacturer,
-    year: yearMatch ? Number(yearMatch[0]) : null,
+    year: productionYearMatch ? Number(productionYearMatch[0]) : null,
     country,
     imageUrl: image
   };
@@ -150,13 +190,13 @@ async function buildCatalog() {
   const failures = [];
 
   for (const listPage of LIST_PAGES) {
-    const listDocument = await fetchDocument(listPage.url);
+    const { document: listDocument } = await fetchWikiDocument(listPage.url);
     const entries = extractListEntries(listDocument, listPage.game);
 
     for (const entry of entries) {
       try {
-        const detailDocument = await fetchDocument(entry.href);
-        const meta = extractMeta(detailDocument);
+        const { document: detailDocument, pageTitle } = await fetchWikiDocument(entry.href);
+        const meta = extractMeta(detailDocument, pageTitle);
         if (!meta.year || !entry.stats.pl) {
           failures.push({ game: listPage.game, href: entry.href, reason: "missing meta or PL" });
           continue;
