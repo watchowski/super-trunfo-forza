@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360">
+  <rect width="640" height="360" fill="#f3f5f8"/>
+  <path d="M48 239c38-59 93-88 171-88h191c72 0 126 29 182 88H48z" fill="#222833"/>
+  <path d="M210 153h203l68 55H139l71-55z" fill="#07090d"/>
+  <path d="M233 166h76l-18 39h-106l48-39zm103 0h69l49 39H318l18-39z" fill="#c7d9ea"/>
+  <circle cx="181" cy="247" r="44" fill="#0d1015"/>
+  <circle cx="181" cy="247" r="20" fill="#d7b85f"/>
+  <circle cx="489" cy="247" r="44" fill="#0d1015"/>
+  <circle cx="489" cy="247" r="20" fill="#d7b85f"/>
+  <path d="M78 236h486" stroke="#d7b85f" stroke-width="7" opacity=".55"/>
+</svg>

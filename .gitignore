@@ -7,3 +7,6 @@ out/
 .env.*
 !.env.example
 coverage/
+*.log
+layout-check*.png
+chrome-debug-profile/

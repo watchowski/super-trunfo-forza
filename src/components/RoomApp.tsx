@@ -19,7 +19,8 @@ export function RoomApp({ code }: { code: string }) {
   const [muted, setMuted] = useState(false);
   const [room, setRoom] = useState<GameState>(() => {
     if (code === "new") return createRoom({ hostNickname: "Host", existingCodes: new Set(), cards: sampleCards });
-    return joinRoom(createRoom({ hostNickname: "Host", existingCodes: new Set([code]), cards: sampleCards }), "Guest");
+    const demoRoom = createRoom({ hostNickname: "Host", existingCodes: new Set(), cards: sampleCards });
+    return joinRoom({ ...demoRoom, code }, "Guest");
   });
 
   const displayCode = useMemo(() => (code === "new" ? room.code : code), [code, room.code]);
