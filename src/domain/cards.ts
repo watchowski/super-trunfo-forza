@@ -3,7 +3,7 @@ export type DisplayStat = ComparableStat | "pl";
 export type PlayerId = "host" | "guest";
 export type Language = "pt-BR" | "en";
 
-export type PerformanceClass = "D" | "C" | "B" | "A" | "S1" | "S2" | "X";
+export type PerformanceClass = "E" | "D" | "C" | "B" | "A" | "S" | "S1" | "S2" | "X" | "R1" | "R2" | "R3";
 
 export interface PowerLevel {
   class: PerformanceClass;

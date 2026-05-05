@@ -65,10 +65,13 @@ Create a local `.env.local` with:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 SUPABASE_STORAGE_BUCKET=card-images
 ```
+
+Use `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` if you are following the newer Supabase dashboard naming. The app also still accepts `NEXT_PUBLIC_SUPABASE_ANON_KEY` as a legacy fallback.
 
 Do not commit `.env` files.
 

@@ -15,6 +15,7 @@ describe("room store", () => {
     expect(room.host?.nickname).toBe("Ana");
     expect(room.guest).toBeUndefined();
     expect(room.phase).toBe("lobby");
+    expect(room.roundWins).toEqual({ host: 0, guest: 0 });
   });
 
   it("joins first guest and rejects second guest", () => {

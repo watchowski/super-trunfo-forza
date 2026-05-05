@@ -1,6 +1,6 @@
 import type { ComparableStat, PlayerId } from "./cards";
 import type { GameState } from "./game";
-import { advanceAfterReveal, createInitialGame, requestMutualEnd, resolveRound } from "./game-engine";
+import { advanceAfterReveal, createInitialGame, setMutualEndRequest, resolveRound } from "./game-engine";
 import type { Card } from "./cards";
 import { kickGuest } from "@/lib/room-store";
 
@@ -10,7 +10,7 @@ export type RoomAction =
   | { type: "start_match"; seed: string; cards: Card[] }
   | { type: "choose_stat"; stat: ComparableStat; seed: string }
   | { type: "advance_round" }
-  | { type: "toggle_end" }
+  | { type: "set_end_request"; enabled: boolean }
   | { type: "rematch"; seed: string; cards: Card[] };
 
 function assertHost(viewer: PlayerId) {
@@ -48,8 +48,8 @@ export function applyRoomAction(room: GameState, viewer: PlayerId, action: RoomA
       return resolveRound(room, action.stat, action.seed);
     case "advance_round":
       return advanceAfterReveal(room);
-    case "toggle_end":
-      return requestMutualEnd(room, viewer);
+    case "set_end_request":
+      return setMutualEndRequest(room, viewer, action.enabled);
     case "rematch":
       assertHost(viewer);
       if (!room.host || !room.guest) throw new Error("Two players are required to start a rematch");

@@ -12,6 +12,9 @@ describe("import validation", () => {
   it("parses class and PI from expected PL labels", () => {
     expect(parsePowerLevel("S1 900")).toEqual({ class: "S1", pi: 900, label: "S1 900" });
     expect(parsePowerLevel("A 718")).toEqual({ class: "A", pi: 718, label: "A 718" });
+    expect(parsePowerLevel("E109")).toEqual({ class: "E", pi: 109, label: "E 109" });
+    expect(parsePowerLevel("R 979")).toBeNull();
+    expect(parsePowerLevel("R1 979")).toEqual({ class: "R1", pi: 979, label: "R1 979" });
   });
 
   it("rejects invalid PL labels", () => {

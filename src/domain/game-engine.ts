@@ -66,6 +66,7 @@ export function createInitialGame(input: CreateInitialGameInput): GameState {
     host: makePlayer("host", input.hostNickname),
     guest: makePlayer("guest", input.guestNickname),
     activePlayer,
+    roundWins: { host: 0, guest: 0 },
     decks: {
       host: selected.filter((_, index) => index % 2 === 0),
       guest: selected.filter((_, index) => index % 2 === 1)
@@ -128,16 +129,20 @@ export function resolveRound(game: GameState, attribute: ComparableStat, seed: s
     host: winner === "host" ? [...hostDeck, ...wonCards] : hostDeck,
     guest: winner === "guest" ? [...guestDeck, ...wonCards] : guestDeck
   };
+  const roundWins = {
+    ...game.roundWins,
+    [winner]: game.roundWins[winner] + 1
+  };
 
-  const result = getCardsFinishResult(decks);
   return {
     ...game,
-    phase: result ? "finished" : "revealed",
+    phase: "revealed",
     activePlayer: winner,
+    roundWins,
     decks,
     tiePile: [],
     lastRound,
-    result,
+    result: undefined,
     updatedAt: now()
   };
 }
@@ -159,10 +164,10 @@ export function advanceAfterReveal(game: GameState): GameState {
   };
 }
 
-export function requestMutualEnd(game: GameState, playerId: PlayerId): GameState {
+export function setMutualEndRequest(game: GameState, playerId: PlayerId, enabled: boolean): GameState {
   const player = game[playerId];
   if (!player) throw new Error("Player is not in room");
-  const updatedPlayer = { ...player, wantsToEnd: !player.wantsToEnd };
+  const updatedPlayer = { ...player, wantsToEnd: enabled };
   const next = { ...game, [playerId]: updatedPlayer, updatedAt: now() } satisfies GameState;
 
   if (next.host?.wantsToEnd && next.guest?.wantsToEnd) {

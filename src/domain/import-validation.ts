@@ -9,12 +9,12 @@ const gameOrder: Record<Card["source"]["game"], number> = {
   FH6: 6
 };
 
-const validClasses = new Set<PerformanceClass>(["D", "C", "B", "A", "S1", "S2", "X"]);
+const validClasses = new Set<PerformanceClass>(["E", "D", "C", "B", "A", "S", "S1", "S2", "X", "R1", "R2", "R3"]);
 
 export type ValidationResult = { ok: true } | { ok: false; reason: string };
 
 export function parsePowerLevel(value: string): PowerLevel | null {
-  const match = value.trim().match(/^(D|C|B|A|S1|S2|X)\s+(\d{3,4})$/);
+  const match = value.trim().match(/^(E|D|C|B|A|S|S1|S2|X|R1|R2|R3)\s*(\d{3,4})$/);
   if (!match) return null;
   const performanceClass = match[1] as PerformanceClass;
   const pi = Number(match[2]);

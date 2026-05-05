@@ -3,8 +3,8 @@ import type { Card } from "@/domain/cards";
 import {
   advanceAfterReveal,
   createInitialGame,
-  requestMutualEnd,
-  resolveRound
+  resolveRound,
+  setMutualEndRequest
 } from "@/domain/game-engine";
 
 const card = (id: string, sp: number, superTrunfo = false): Card => ({
@@ -71,6 +71,7 @@ describe("game engine", () => {
     expect(revealed.phase).toBe("revealed");
     expect(revealed.lastRound?.winner).toBe("host");
     expect(revealed.lastRound?.reason).toBe("attribute");
+    expect(revealed.roundWins).toEqual({ host: 1, guest: 0 });
   });
 
   it("lets Super Trunfo beat a common card regardless of stat", () => {
@@ -124,6 +125,21 @@ describe("game engine", () => {
     expect(next.tiePile).toHaveLength(2);
   });
 
+  it("does not add a round win on ties", () => {
+    const game = createInitialGame({
+      code: "1234",
+      hostNickname: "Ana",
+      guestNickname: "Leo",
+      cards: [card("h1", 5), card("g1", 5), card("h2", 9), card("g2", 1)],
+      deckSize: 4,
+      seed: "ordered"
+    });
+
+    const revealed = resolveRound({ ...game, activePlayer: "host" }, "sp", "tie-score");
+
+    expect(revealed.roundWins).toEqual({ host: 0, guest: 0 });
+  });
+
   it("ends by mutual agreement with draw on equal card counts", () => {
     const game = createInitialGame({
       code: "1234",
@@ -134,10 +150,31 @@ describe("game engine", () => {
       seed: "ordered"
     });
 
-    const hostRequested = requestMutualEnd(game, "host");
-    const finished = requestMutualEnd(hostRequested, "guest");
+    const hostRequested = setMutualEndRequest(game, "host", true);
+    const finished = setMutualEndRequest(hostRequested, "guest", true);
 
     expect(finished.phase).toBe("finished");
     expect(finished.result).toEqual({ winner: "draw", reason: "mutual" });
+  });
+
+  it("keeps the final reveal visible until the next advance", () => {
+    const game = createInitialGame({
+      code: "1234",
+      hostNickname: "Ana",
+      guestNickname: "Leo",
+      cards: [card("host-top", 9), card("guest-top", 4)],
+      deckSize: 2,
+      seed: "ordered"
+    });
+
+    const revealed = resolveRound({ ...game, activePlayer: "host" }, "sp", "last-round");
+
+    expect(revealed.phase).toBe("revealed");
+    expect(revealed.result).toBeUndefined();
+    expect(revealed.lastRound?.winner).toBe("host");
+
+    const finished = advanceAfterReveal(revealed);
+    expect(finished.phase).toBe("finished");
+    expect(finished.result).toEqual({ winner: "host", reason: "cards" });
   });
 });

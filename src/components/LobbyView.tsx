@@ -8,12 +8,14 @@ interface LobbyViewProps {
   viewer: PlayerId;
   language: Language;
   isDemo?: boolean;
+  isPending?: boolean;
+  pendingLabel?: string | null;
   onStart: () => void;
   onDeckSizeChange: (size: number) => void;
   onKickGuest: () => void;
 }
 
-export function LobbyView({ room, viewer, language, isDemo, onStart, onDeckSizeChange, onKickGuest }: LobbyViewProps) {
+export function LobbyView({ room, viewer, language, isDemo, isPending, pendingLabel, onStart, onDeckSizeChange, onKickGuest }: LobbyViewProps) {
   const deckOptions = Array.from({ length: Math.floor(room.maxDeckSize / 2) }, (_, index) => (index + 1) * 2);
   const isPt = language === "pt-BR";
   const canControl = viewer === "host";
@@ -35,7 +37,7 @@ export function LobbyView({ room, viewer, language, isDemo, onStart, onDeckSizeC
           <span>Guest</span>
           <strong>{room.guest?.nickname ?? (isPt ? "Aguardando..." : "Waiting...")}</strong>
           {room.guest && canControl && (
-            <button className="ghostButton" type="button" onClick={onKickGuest}>
+            <button className="ghostButton" type="button" onClick={onKickGuest} disabled={isPending}>
               {isPt ? "Expulsar" : "Kick"}
             </button>
           )}
@@ -48,7 +50,7 @@ export function LobbyView({ room, viewer, language, isDemo, onStart, onDeckSizeC
       </p>
       <label className="field">
         <span>{isPt ? "Cartas na partida" : "Cards in match"}</span>
-        <select value={room.selectedDeckSize} disabled={!canControl} onChange={(event) => onDeckSizeChange(Number(event.target.value))}>
+        <select value={room.selectedDeckSize} disabled={!canControl || isPending} onChange={(event) => onDeckSizeChange(Number(event.target.value))}>
           {deckOptions.map((size) => (
             <option key={size} value={size}>
               {size === room.maxDeckSize ? `${size} (${isPt ? "todas" : "all"})` : size}
@@ -56,8 +58,14 @@ export function LobbyView({ room, viewer, language, isDemo, onStart, onDeckSizeC
           ))}
         </select>
       </label>
-      <button className="primaryButton" type="button" disabled={!room.guest || !canControl} onClick={onStart}>
-        {isPt ? "Iniciar partida" : "Start match"}
+      {pendingLabel && (
+        <div className="inlineLoading" role="status" aria-live="polite">
+          <span className="loadingSpinner" aria-hidden="true" />
+          <span>{pendingLabel}</span>
+        </div>
+      )}
+      <button className="primaryButton" type="button" disabled={!room.guest || !canControl || isPending} onClick={onStart}>
+        {isPending ? (isPt ? "Aguarde..." : "Please wait...") : isPt ? "Iniciar partida" : "Start match"}
       </button>
     </section>
   );

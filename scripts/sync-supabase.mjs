@@ -3,6 +3,7 @@ import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
 
 const catalogPath = path.join(process.cwd(), "data", "catalog", "cards.json");
+const previewCatalogPath = path.join(process.cwd(), "data", "catalog", "cards.preview.json");
 const sampleCatalogPath = path.join(process.cwd(), "data", "catalog", "cards.sample.json");
 const imageDir = path.join(process.cwd(), "data", "images");
 const bucket = process.env.SUPABASE_STORAGE_BUCKET || "card-images";
@@ -15,18 +16,47 @@ function required(name) {
   return value;
 }
 
-async function loadCards() {
+async function tryReadJson(filePath) {
   try {
-    return JSON.parse(await readFile(catalogPath, "utf8"));
+    return JSON.parse(await readFile(filePath, "utf8"));
   } catch {
-    return JSON.parse(await readFile(sampleCatalogPath, "utf8"));
+    return null;
   }
 }
 
-async function uploadImages(supabase) {
+async function loadCards() {
+  const finalCards = await tryReadJson(catalogPath);
+  if (finalCards) {
+    return { cards: finalCards, source: "cards.json" };
+  }
+
+  const previewCards = await tryReadJson(previewCatalogPath);
+  if (previewCards) {
+    return { cards: previewCards, source: "cards.preview.json" };
+  }
+
+  const sampleCards = await tryReadJson(sampleCatalogPath);
+  if (sampleCards) {
+    return { cards: sampleCards, source: "cards.sample.json" };
+  }
+
+  throw new Error("No catalog file available to sync");
+}
+
+function referencedStorageFiles(cards) {
+  return cards
+    .map((card) => card.imageUrl)
+    .filter((imageUrl) => typeof imageUrl === "string" && imageUrl.startsWith("/images/"))
+    .map((imageUrl) => path.basename(imageUrl));
+}
+
+async function uploadImages(supabase, cards) {
+  const referenced = new Set(referencedStorageFiles(cards));
+  if (referenced.size === 0) return;
+
   let files = [];
   try {
-    files = await readdir(imageDir);
+    files = (await readdir(imageDir)).filter((fileName) => referenced.has(fileName));
   } catch {
     return;
   }
@@ -80,14 +110,38 @@ async function upsertCards(supabase, cards) {
   }
 }
 
+async function pruneStaleCards(supabase, cards) {
+  const expectedIds = new Set(cards.map((card) => card.id));
+  const { data, error } = await supabase.from("catalog_cards").select("id");
+  if (error) {
+    throw error;
+  }
+
+  const staleIds = (data ?? [])
+    .map((row) => row.id)
+    .filter((id) => typeof id === "string" && !expectedIds.has(id));
+
+  if (staleIds.length === 0) {
+    return 0;
+  }
+
+  const { error: deleteError } = await supabase.from("catalog_cards").delete().in("id", staleIds);
+  if (deleteError) {
+    throw deleteError;
+  }
+
+  return staleIds.length;
+}
+
 async function main() {
   const supabase = createClient(required("NEXT_PUBLIC_SUPABASE_URL"), required("SUPABASE_SERVICE_ROLE_KEY"), {
     auth: { autoRefreshToken: false, persistSession: false }
   });
-  const cards = await loadCards();
-  await uploadImages(supabase);
+  const { cards, source } = await loadCards();
+  await uploadImages(supabase, cards);
   await upsertCards(supabase, cards);
-  console.log(`Synced ${cards.length} cards to Supabase`);
+  const removed = await pruneStaleCards(supabase, cards);
+  console.log(`Synced ${cards.length} cards to Supabase from ${source}${removed ? ` and removed ${removed} stale rows` : ""}`);
 }
 
 main().catch((error) => {

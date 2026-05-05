@@ -6,6 +6,11 @@
   --text: #f4f7fb;
   --muted: #9ca8b8;
   --accent: #d5b66a;
+  --tier-color: rgba(255, 255, 255, 0.18);
+  --tier-glow: rgba(255, 255, 255, 0.08);
+  --tier-fill-1: rgba(255, 255, 255, 0.05);
+  --tier-fill-2: rgba(255, 255, 255, 0.01);
+  --tier-topline: #f7d889;
 }
 
 * {
@@ -142,17 +147,17 @@ select {
 .gameCard {
   position: relative;
   width: min(100%, 380px);
-  max-height: min(760px, calc(100vh - 188px));
-  aspect-ratio: 2.5 / 3.5;
   display: grid;
-  grid-template-rows: auto minmax(180px, 1.45fr) auto auto;
+  grid-template-rows: auto auto auto auto;
   gap: 10px;
   padding: 12px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--tier-color);
   border-radius: 8px;
-  background: linear-gradient(160deg, #171d27, #090b10);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.06), transparent 34%),
+    linear-gradient(160deg, var(--tier-fill-1), var(--tier-fill-2) 62%, #090b10);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(255, 255, 255, 0.02), 0 18px 40px var(--tier-glow);
 }
 
 .gameCard::before {
@@ -198,16 +203,113 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  color: #f7d889;
+  color: var(--tier-topline);
   font-size: 0.76rem;
   font-weight: 900;
 }
 
+.tier-e {
+  --tier-color: rgba(154, 110, 74, 0.92);
+  --tier-glow: rgba(154, 110, 74, 0.18);
+  --tier-fill-1: rgba(154, 110, 74, 0.3);
+  --tier-fill-2: rgba(78, 48, 30, 0.14);
+  --tier-topline: #efc89b;
+}
+
+.tier-d {
+  --tier-color: rgba(131, 162, 88, 0.92);
+  --tier-glow: rgba(131, 162, 88, 0.18);
+  --tier-fill-1: rgba(131, 162, 88, 0.24);
+  --tier-fill-2: rgba(46, 73, 35, 0.14);
+  --tier-topline: #d6f0ae;
+}
+
+.tier-c {
+  --tier-color: rgba(74, 160, 122, 0.92);
+  --tier-glow: rgba(74, 160, 122, 0.18);
+  --tier-fill-1: rgba(74, 160, 122, 0.24);
+  --tier-fill-2: rgba(26, 82, 61, 0.14);
+  --tier-topline: #bcefd7;
+}
+
+.tier-b {
+  --tier-color: rgba(71, 129, 210, 0.94);
+  --tier-glow: rgba(71, 129, 210, 0.2);
+  --tier-fill-1: rgba(71, 129, 210, 0.26);
+  --tier-fill-2: rgba(32, 56, 104, 0.14);
+  --tier-topline: #c8ddff;
+}
+
+.tier-a {
+  --tier-color: rgba(212, 138, 64, 0.96);
+  --tier-glow: rgba(212, 138, 64, 0.22);
+  --tier-fill-1: rgba(212, 138, 64, 0.28);
+  --tier-fill-2: rgba(88, 46, 15, 0.15);
+  --tier-topline: #ffd7a9;
+}
+
+.tier-s {
+  --tier-color: rgba(223, 78, 78, 0.96);
+  --tier-glow: rgba(223, 78, 78, 0.22);
+  --tier-fill-1: rgba(223, 78, 78, 0.28);
+  --tier-fill-2: rgba(90, 20, 20, 0.16);
+  --tier-topline: #ffc1c1;
+}
+
+.tier-s1 {
+  --tier-color: rgba(224, 84, 148, 0.96);
+  --tier-glow: rgba(224, 84, 148, 0.24);
+  --tier-fill-1: rgba(224, 84, 148, 0.3);
+  --tier-fill-2: rgba(93, 22, 58, 0.16);
+  --tier-topline: #ffd0e5;
+}
+
+.tier-s2 {
+  --tier-color: rgba(147, 97, 230, 0.96);
+  --tier-glow: rgba(147, 97, 230, 0.24);
+  --tier-fill-1: rgba(147, 97, 230, 0.3);
+  --tier-fill-2: rgba(49, 25, 91, 0.16);
+  --tier-topline: #e0ceff;
+}
+
+.tier-x {
+  --tier-color: rgba(84, 210, 236, 0.98);
+  --tier-glow: rgba(84, 210, 236, 0.26);
+  --tier-fill-1: rgba(84, 210, 236, 0.28);
+  --tier-fill-2: rgba(20, 74, 88, 0.16);
+  --tier-topline: #c9f8ff;
+}
+
+.tier-r1 {
+  --tier-color: rgba(255, 109, 80, 0.98);
+  --tier-glow: rgba(255, 109, 80, 0.24);
+  --tier-fill-1: rgba(255, 109, 80, 0.3);
+  --tier-fill-2: rgba(96, 30, 12, 0.16);
+  --tier-topline: #ffd0c5;
+}
+
+.tier-r2 {
+  --tier-color: rgba(255, 82, 124, 0.98);
+  --tier-glow: rgba(255, 82, 124, 0.26);
+  --tier-fill-1: rgba(255, 82, 124, 0.32);
+  --tier-fill-2: rgba(102, 16, 39, 0.16);
+  --tier-topline: #ffd0dc;
+}
+
+.tier-r3 {
+  --tier-color: rgba(255, 65, 65, 0.98);
+  --tier-glow: rgba(255, 65, 65, 0.28);
+  --tier-fill-1: rgba(255, 65, 65, 0.32);
+  --tier-fill-2: rgba(100, 12, 12, 0.16);
+  --tier-topline: #ffd3d3;
+}
+
 .cardImageWrap {
   min-height: 170px;
+  aspect-ratio: 1.7 / 1;
   border-radius: 6px;
   overflow: hidden;
-  background: #202733;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(6, 8, 12, 0.44));
 }
 
 .cardImage {
@@ -242,6 +344,12 @@ select {
   align-items: center;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   padding-top: 2px;
+}
+
+.statRowHighlight {
+  background: rgba(213, 182, 106, 0.1);
+  box-shadow: inset 3px 0 0 rgba(213, 182, 106, 0.8);
+  padding-left: 8px;
 }
 
 .statRow dt {
@@ -407,6 +515,76 @@ select {
   letter-spacing: 0;
 }
 
+.scoreboard {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0 16px;
+}
+
+.scoreTile {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.scoreTile span {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.scoreTile strong {
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
+.scoreTileViewer {
+  border-color: rgba(213, 182, 106, 0.64);
+  background: rgba(213, 182, 106, 0.09);
+}
+
+.resultScoreboard {
+  max-width: 420px;
+}
+
+.roundAdvanceHint {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.turnBadge {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.turnBadge[data-active="true"] {
+  border-color: rgba(213, 182, 106, 0.7);
+  background: rgba(213, 182, 106, 0.14);
+  color: #f7d889;
+}
+
+.roundSummary {
+  margin: -10px 0 14px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
 .cardColumn h2 {
   margin: 0 0 20px;
   font-size: clamp(1.6rem, 3vw, 2.25rem);
@@ -519,6 +697,38 @@ select {
   color: rgba(244, 247, 251, 0.72);
 }
 
+.inlineLoading {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.loadingSpinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+.endRequestStatus {
+  display: grid;
+  gap: 4px;
+  margin: 14px 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .modalBackdrop {
   position: fixed;
   inset: 0;
@@ -581,6 +791,14 @@ select {
   }
 
   .statButtons {
+    grid-template-columns: 1fr;
+  }
+
+  .gameCard {
+    width: 100%;
+  }
+
+  .scoreboard {
     grid-template-columns: 1fr;
   }
 }

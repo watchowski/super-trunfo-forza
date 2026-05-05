@@ -9,9 +9,9 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "import:forza": "node scripts/import-forza.mjs",
-    "import:forza:write": "node scripts/import-forza.mjs --write",
-    "sync:supabase": "node scripts/sync-supabase.mjs"
+    "import:forza": "node --env-file=.env.local scripts/import-forza.mjs",
+    "import:forza:write": "node --env-file=.env.local scripts/import-forza.mjs --write",
+    "sync:supabase": "node --env-file=.env.local scripts/sync-supabase.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",

@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import type { Card, Language } from "@/domain/cards";
+import type { Card, ComparableStat, Language } from "@/domain/cards";
 import { COMPARABLE_STATS } from "@/domain/cards";
 import { statLabel } from "@/domain/i18n";
 
@@ -8,9 +8,10 @@ interface CardViewProps {
   hidden?: boolean;
   language: Language;
   revealLabel?: string;
+  highlightedStat?: ComparableStat;
 }
 
-export function CardView({ card, hidden, language, revealLabel }: CardViewProps) {
+export function CardView({ card, hidden, language, revealLabel, highlightedStat }: CardViewProps) {
   if (hidden || !card) {
     return (
       <article className="gameCard cardBack">
@@ -37,7 +38,7 @@ export function CardView({ card, hidden, language, revealLabel }: CardViewProps)
       </div>
       <dl className="statGrid">
         {COMPARABLE_STATS.map((stat) => (
-          <div className="statRow" key={stat} title={statLabel(language, stat)}>
+          <div className={clsx("statRow", highlightedStat === stat && "statRowHighlight")} key={stat} title={statLabel(language, stat)}>
             <dt>{stat.toUpperCase()}</dt>
             <dd>{card.stats[stat].toFixed(1)}</dd>
           </div>

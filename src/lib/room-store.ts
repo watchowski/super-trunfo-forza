@@ -38,6 +38,7 @@ export function createRoom(input: { hostNickname: string; existingCodes: Set<str
     code: makeCode(input.existingCodes),
     host: makePlayer("host", input.hostNickname),
     activePlayer: "host",
+    roundWins: { host: 0, guest: 0 },
     decks: { host: [], guest: [] },
     tiePile: [],
     maxDeckSize: input.cards.length,

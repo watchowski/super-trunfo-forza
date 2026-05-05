@@ -24,7 +24,7 @@ In Supabase, create a project and wait for it to finish provisioning.
 You will need:
 
 - Project URL
-- Publishable/anon key
+- Publishable key
 - Service role key
 
 References:
@@ -38,10 +38,16 @@ Copy `.env.example` to `.env.local` and fill:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 SUPABASE_STORAGE_BUCKET=card-images
 ```
+
+For this project:
+
+- prefer `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- keep `NEXT_PUBLIC_SUPABASE_ANON_KEY` empty unless you specifically want the legacy fallback
 
 ## 3. Apply schema
 

@@ -11,6 +11,8 @@ import { LobbyView } from "./LobbyView";
 import { ResultView } from "./ResultView";
 import { RulesModal } from "./RulesModal";
 import { SoundToggle } from "./SoundToggle";
+import { useGameSounds } from "./use-game-sounds";
+import { preferNewerSnapshot } from "./realtime-room-state";
 
 interface RealtimeRoomAppProps {
   code: string;
@@ -29,10 +31,12 @@ export function RealtimeRoomApp({ code }: RealtimeRoomAppProps) {
   const [language, setLanguage] = useState<Language>("pt-BR");
   const [muted, setMuted] = useState(false);
   const [pendingJoin, setPendingJoin] = useState(false);
+  const [pendingActionLabel, setPendingActionLabel] = useState<string | null>(null);
   const [joinNickname, setJoinNickname] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [session, setSession] = useState<RoomSession | null>(() => loadRoomSession(code));
   const viewer = snapshot?.viewer ?? session?.viewer;
+  useGameSounds(snapshot?.room ?? null, muted);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,7 +46,7 @@ export function RealtimeRoomApp({ code }: RealtimeRoomAppProps) {
         const response = await fetch(`/api/rooms/${code}${session ? `?sessionId=${encodeURIComponent(session.sessionId)}` : ""}`);
         const payload = await readJson<RoomSnapshot>(response);
         if (!cancelled) {
-          setSnapshot(payload);
+          setSnapshot((current) => preferNewerSnapshot(current, payload));
         }
       } catch (requestError) {
         if (!cancelled) {
@@ -70,7 +74,7 @@ export function RealtimeRoomApp({ code }: RealtimeRoomAppProps) {
           const currentSession = loadRoomSession(code);
           void fetch(`/api/rooms/${code}${currentSession ? `?sessionId=${encodeURIComponent(currentSession.sessionId)}` : ""}`)
             .then((response) => readJson<RoomSnapshot>(response))
-            .then((payload) => setSnapshot(payload))
+            .then((payload) => setSnapshot((current) => preferNewerSnapshot(current, payload)))
             .catch(() => undefined);
         }
       )
@@ -84,7 +88,7 @@ export function RealtimeRoomApp({ code }: RealtimeRoomAppProps) {
   useEffect(() => {
     if (!session) return;
     const interval = window.setInterval(() => {
-      void mutate({ sessionId: session.sessionId, action: "heartbeat" });
+      void mutate({ sessionId: session.sessionId, action: "heartbeat" }, { silent: true });
     }, 30000);
 
     return () => {
@@ -92,19 +96,30 @@ export function RealtimeRoomApp({ code }: RealtimeRoomAppProps) {
     };
   }, [session]);
 
-  async function mutate(request: ActionRequest) {
-    const response = await fetch(`/api/rooms/${code}/actions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request)
-    });
-    const payload = await readJson<RoomMutationResponse>(response);
-    if (payload.session) {
-      saveRoomSession(payload.session);
-      setSession(payload.session);
+  async function mutate(request: ActionRequest, options?: { pendingLabel?: string; silent?: boolean }) {
+    if (!options?.silent) {
+      setError(null);
+      setPendingActionLabel(options?.pendingLabel ?? null);
     }
-    setSnapshot(payload.snapshot);
-    return payload.snapshot;
+
+    try {
+      const response = await fetch(`/api/rooms/${code}/actions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(request)
+      });
+      const payload = await readJson<RoomMutationResponse>(response);
+      if (payload.session) {
+        saveRoomSession(payload.session);
+        setSession(payload.session);
+      }
+      setSnapshot((current) => preferNewerSnapshot(current, payload.snapshot));
+      return payload.snapshot;
+    } finally {
+      if (!options?.silent) {
+        setPendingActionLabel(null);
+      }
+    }
   }
 
   async function joinRoom(event: React.FormEvent<HTMLFormElement>) {
@@ -122,7 +137,7 @@ export function RealtimeRoomApp({ code }: RealtimeRoomAppProps) {
         saveRoomSession(payload.session);
         setSession(payload.session);
       }
-      setSnapshot(payload.snapshot);
+      setSnapshot((current) => preferNewerSnapshot(current, payload.snapshot));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Nao foi possivel entrar na sala.");
     } finally {
@@ -200,9 +215,26 @@ export function RealtimeRoomApp({ code }: RealtimeRoomAppProps) {
           room={room}
           viewer={viewer}
           language={language}
-          onStart={() => mutate({ sessionId: session!.sessionId, action: "start_match" }).catch((requestError) => setError(requestError.message))}
-          onDeckSizeChange={(deckSize) => mutate({ sessionId: session!.sessionId, action: "set_deck_size", deckSize }).catch((requestError) => setError(requestError.message))}
-          onKickGuest={() => mutate({ sessionId: session!.sessionId, action: "kick_guest" }).catch((requestError) => setError(requestError.message))}
+          isPending={Boolean(pendingActionLabel)}
+          pendingLabel={pendingActionLabel}
+          onStart={() =>
+            mutate(
+              { sessionId: session!.sessionId, action: "start_match" },
+              { pendingLabel: language === "pt-BR" ? "Iniciando partida..." : "Starting match..." }
+            ).catch((requestError) => setError(requestError.message))
+          }
+          onDeckSizeChange={(deckSize) =>
+            mutate(
+              { sessionId: session!.sessionId, action: "set_deck_size", deckSize },
+              { pendingLabel: language === "pt-BR" ? "Atualizando baralho..." : "Updating deck..." }
+            ).catch((requestError) => setError(requestError.message))
+          }
+          onKickGuest={() =>
+            mutate(
+              { sessionId: session!.sessionId, action: "kick_guest" },
+              { pendingLabel: language === "pt-BR" ? "Atualizando sala..." : "Updating room..." }
+            ).catch((requestError) => setError(requestError.message))
+          }
         />
       )}
       {(room.phase === "playing" || room.phase === "revealed") && (
@@ -210,16 +242,41 @@ export function RealtimeRoomApp({ code }: RealtimeRoomAppProps) {
           room={room}
           viewer={viewer}
           language={language}
-          onChoose={(stat: ComparableStat) => mutate({ sessionId: session!.sessionId, action: "choose_stat", stat }).catch((requestError) => setError(requestError.message))}
-          onNextRound={() => mutate({ sessionId: session!.sessionId, action: "advance_round" }).catch((requestError) => setError(requestError.message))}
-          onToggleEnd={() => mutate({ sessionId: session!.sessionId, action: "toggle_end" }).catch((requestError) => setError(requestError.message))}
+          isPending={Boolean(pendingActionLabel)}
+          pendingLabel={pendingActionLabel}
+          onChoose={(stat: ComparableStat) =>
+            mutate(
+              { sessionId: session!.sessionId, action: "choose_stat", stat },
+              { pendingLabel: language === "pt-BR" ? "Revelando cartas..." : "Revealing cards..." }
+            ).catch((requestError) => setError(requestError.message))
+          }
+          onNextRound={() =>
+            mutate(
+              { sessionId: session!.sessionId, action: "advance_round" },
+              { pendingLabel: language === "pt-BR" ? "Preparando proxima rodada..." : "Preparing next round..." }
+            ).catch((requestError) => setError(requestError.message))
+          }
+          onToggleEnd={(enabled: boolean) =>
+            mutate(
+              { sessionId: session!.sessionId, action: "set_end_request", enabled },
+              { pendingLabel: language === "pt-BR" ? "Atualizando solicitacao..." : "Updating request..." }
+            ).catch((requestError) => setError(requestError.message))
+          }
         />
       )}
       {room.phase === "finished" && (
         <ResultView
           room={room}
+          viewer={viewer}
           language={language}
-          onRematch={() => mutate({ sessionId: session!.sessionId, action: "rematch" }).catch((requestError) => setError(requestError.message))}
+          isPending={Boolean(pendingActionLabel)}
+          pendingLabel={pendingActionLabel}
+          onRematch={() =>
+            mutate(
+              { sessionId: session!.sessionId, action: "rematch" },
+              { pendingLabel: language === "pt-BR" ? "Preparando revanche..." : "Preparing rematch..." }
+            ).catch((requestError) => setError(requestError.message))
+          }
         />
       )}
       {error && <p className="errorText floatingError">{error}</p>}

@@ -30,7 +30,7 @@ export type ActionRequest =
   | { sessionId: string; action: "start_match" }
   | { sessionId: string; action: "choose_stat"; stat: ComparableStat }
   | { sessionId: string; action: "advance_round" }
-  | { sessionId: string; action: "toggle_end" }
+  | { sessionId: string; action: "set_end_request"; enabled: boolean }
   | { sessionId: string; action: "rematch" }
   | { sessionId: string; action: "heartbeat" };
 

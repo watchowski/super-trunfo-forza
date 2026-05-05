@@ -10,3 +10,5 @@ coverage/
 *.log
 layout-check*.png
 chrome-debug-profile/
+
+.vercel

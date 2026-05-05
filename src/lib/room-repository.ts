@@ -7,6 +7,7 @@ import type { RoomAction } from "@/domain/room-actions";
 import { applyRoomAction } from "@/domain/room-actions";
 import { hasSupabaseConfig } from "@/lib/env";
 import { loadCatalogCards } from "@/lib/catalog";
+import { presencePatchForViewer } from "@/lib/room-presence";
 import { createRoom, joinRoom } from "@/lib/room-store";
 import { getServiceSupabaseClient } from "@/lib/supabase/server";
 
@@ -110,21 +111,38 @@ async function persistRow(row: RoomRow) {
   return response.data;
 }
 
-function actionFromRequest(request: ActionRequest, cards: Awaited<ReturnType<typeof loadCatalogCards>>): RoomAction | null {
+async function persistPresence(code: string, viewer: PlayerId) {
+  const supabase = getServiceSupabaseClient();
+  const timestamp = nowIso();
+  const payload = {
+    ...presencePatchForViewer(viewer, timestamp),
+    updated_at: timestamp,
+    expires_at: addHours(ROOM_TTL_HOURS)
+  };
+  const response = await supabase.from("rooms").update(payload).eq("code", code).select("*").single<RoomRow>();
+  if (response.error) {
+    throw response.error;
+  }
+  return response.data;
+}
+
+function actionFromRequest(request: ActionRequest, cards?: Awaited<ReturnType<typeof loadCatalogCards>>): RoomAction | null {
   switch (request.action) {
     case "set_deck_size":
       return { type: "set_deck_size", deckSize: request.deckSize };
     case "kick_guest":
       return { type: "kick_guest" };
     case "start_match":
+      if (!cards) throw new Error("Catalog is required to start the match");
       return { type: "start_match", seed: `${Date.now()}:start`, cards };
     case "choose_stat":
       return { type: "choose_stat", stat: request.stat, seed: `${Date.now()}:round` };
     case "advance_round":
       return { type: "advance_round" };
-    case "toggle_end":
-      return { type: "toggle_end" };
+    case "set_end_request":
+      return { type: "set_end_request", enabled: request.enabled };
     case "rematch":
+      if (!cards) throw new Error("Catalog is required to start the rematch");
       return { type: "rematch", seed: `${Date.now()}:rematch`, cards };
     case "heartbeat":
       return null;
@@ -259,8 +277,15 @@ export async function applyRealtimeRoomAction(code: string, request: ActionReque
   const viewer = getViewerForSession(resolved, request.sessionId);
   if (!viewer) throw new Error("Session is not allowed in this room");
 
+  if (request.action === "heartbeat") {
+    const heartbeatRow = resolved === row ? row : await persistRow(resolved);
+    const updated = await persistPresence(heartbeatRow.code, viewer);
+    return roomSnapshot(updated, request.sessionId);
+  }
+
   const touched = touchPresence(resolved, viewer);
-  const cards = await loadCatalogCards();
+  const cards =
+    request.action === "start_match" || request.action === "rematch" ? await loadCatalogCards() : undefined;
   const domainAction = actionFromRequest(request, cards);
   const nextState = domainAction ? applyRoomAction(touched.state_json, viewer, domainAction) : touched.state_json;
   const updated = await persistRow({

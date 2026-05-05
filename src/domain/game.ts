@@ -32,6 +32,7 @@ export interface GameState {
   host?: Player;
   guest?: Player;
   activePlayer: PlayerId;
+  roundWins: Record<PlayerId, number>;
   decks: Record<PlayerId, Card[]>;
   tiePile: Card[];
   lastRound?: RoundResult;
