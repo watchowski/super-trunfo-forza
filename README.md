@@ -51,6 +51,8 @@ npm run import:forza
 
 That writes a preview dataset to `data/catalog/cards.preview.json` and an import report to `data/catalog/import-report.json`.
 
+Those files are intentionally gitignored because they are generated review artifacts, not stable source files.
+
 After reviewing the diff:
 
 ```bash
@@ -58,6 +60,8 @@ npm run import:forza:write
 ```
 
 That promotes the generated dataset to `data/catalog/cards.json`.
+
+`data/catalog/cards.json` is also gitignored. The repository keeps `data/catalog/cards.sample.json` as the lightweight versioned fixture, while full generated catalogs stay local or move to Supabase.
 
 ## Supabase Environment
 
@@ -84,6 +88,8 @@ npm run sync:supabase
 ```
 
 That uploads local images from `data/images/` to the `card-images` bucket and upserts catalog rows into `public.catalog_cards`.
+
+Downloaded source images in `data/images/` are treated as generated local assets and are not versioned in git.
 
 ## Data Source Notes
 

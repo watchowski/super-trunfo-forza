@@ -12,3 +12,10 @@ layout-check*.png
 chrome-debug-profile/
 
 .vercel
+
+# Generated catalog/import artifacts
+data/catalog/cards.json
+data/catalog/cards.preview.json
+data/catalog/import-report.json
+data/images/*
+!data/images/.gitkeep
