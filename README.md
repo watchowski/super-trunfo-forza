@@ -91,6 +91,8 @@ That uploads local images from `data/images/` to the `card-images` bucket and up
 
 Downloaded source images in `data/images/` are treated as generated local assets and are not versioned in git.
 
+For the full operational flow, see [docs/data-pipeline.md](C:/Users/JKL/Documents/super-trunfo/.worktrees/vertical-mvp/docs/data-pipeline.md).
+
 ## Data Source Notes
 
 The target catalog comes from Forza Wiki/Fandom pages listed in `docs/superpowers/specs/2026-05-04-super-trunfo-mvp-design.md`. Images should be downloaded from each car page thumb/infobox and source URLs preserved in the dataset.
